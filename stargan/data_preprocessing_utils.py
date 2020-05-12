@@ -92,8 +92,8 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
 def get_wav_and_labels(filename, data_dir):
 
     # folder = filename[:-9]
-    wav_path = data_dir + "/audio/" + filename
-    label_path = data_dir + "/Annotations/" + filename[:-9] + ".txt"
+    wav_path = os.path.join(data_dir, "audio", filename)
+    label_path = os.path.join(data_dir, "annotations", filename[:-9] + ".txt")
 
     with open(label_path, 'r') as label_file:
 

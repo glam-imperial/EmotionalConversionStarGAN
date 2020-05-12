@@ -298,7 +298,7 @@ def f0_pitch_conversion(f0, source_labels, target_labels):
     #
     # f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
 
-    # ----- Relative transformation ----- #
+    # ----- Proposed relative transformation ----- #
     logf0 = np.ma.log(f0)
     mean = np.mean(logf0)
     var = np.var(logf0)
