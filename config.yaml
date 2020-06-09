@@ -1,0 +1,61 @@
+model:
+
+      name: "test111"
+      num_feats: 36
+      batch_size: 4
+      use_speaker: False
+      use_dimension: False
+      num_classes: 3
+
+loss:
+
+    lambda_gp: 5
+    lambda_g_emo_cls: 1
+    lambda_g_spk_cls: 1
+    lambda_g_dim_cls: 1
+    lambda_cycle: 3
+    lambda_id: 2
+
+    num_iters: 20
+    num_iters_decay: 10
+    resume_iters: 0
+
+    train_classifier: True
+    c_to_g_ratio: 1
+    c_to_d_ratio: 1
+
+optimizer:
+
+    beta1: 0.5
+    beta2: 0.999
+
+    g_lr: 0.0001
+    d_lr: 0.0001
+    emo_cls_lr: 0.0001
+    speaker_cls_lr: 0.0001
+    dim_cls_lr: 0.0001
+
+
+logs:
+
+    use_tensorboard: True
+
+    log_dir: './logs'
+    sample_dir: './samples'
+    model_save_dir: './checkpoints'
+
+    log_every: 1
+    sample_every: 1000
+    test_every: 1000
+    model_save_every: 1000
+
+data:
+
+    dataset_dir: "../data"
+    sample_set_dir: '../data/samples/originals'
+    train_test_split: 0.9
+    normalise_mels: True
+    type: 'world'
+
+verbose: False
+device: torch.device('cuda')
