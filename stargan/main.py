@@ -28,7 +28,7 @@ import os
 import librosa
 from librosa.util import find_files
 
-import audio_utils
+from utils import audio_utils
 import my_dataset
 from my_dataset import get_filenames
 import solver

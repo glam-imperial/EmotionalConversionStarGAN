@@ -12,7 +12,7 @@ import os
 import yaml
 import numpy as np
 
-import audio_utils
+from utils import audio_utils
 import data_preprocessing_utils as pp
 import world_utils as pw
 

@@ -25,7 +25,7 @@ import yaml
 import argparse
 import librosa
 
-import audio_utils
+from utils import audio_utils
 import my_dataset
 import classifiers
 from my_dataset import get_filenames

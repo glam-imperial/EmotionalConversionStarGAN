@@ -34,7 +34,7 @@ from matplotlib import pyplot as plt
 
 import solver
 import model
-import audio_utils
+from utils import audio_utils
 import data_preprocessing_utils as pp
 import world_utils as pw
 

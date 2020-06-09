@@ -11,7 +11,7 @@ import torch.nn as nn
 import torch.utils.data as data_utils
 import torch.nn.functional as F
 
-import audio_utils
+from utils import audio_utils
 
 import numpy as np
 import librosa

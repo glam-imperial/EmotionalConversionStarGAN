@@ -20,7 +20,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import audio_utils
+from utils import audio_utils
 import model
 import my_dataset
 from logger import Logger
