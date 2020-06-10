@@ -79,17 +79,19 @@ def generate_world_features(filenames, data_dir):
         wav, labels = get_wav_and_labels(f, data_dir)
         wav = np.array(wav, dtype=np.float64)
         labels = np.array(labels)
-        #
-        f0, ap, sp, coded_sp = cal_mcep(wav)
 
-        # Ignores data sample if wrong emotion or sample is too long
-        if labels[0] != -1 and coded_sp.shape[1] < MAX_LENGTH:
+        # Ignores data sample if wrong emotion
+        if labels[0] != -1:
+            f0, ap, sp, coded_sp = cal_mcep(wav)
 
-            np.save(os.path.join(world_dir, f[:-4] + ".npy"), coded_sp)
-            np.save(os.path.join(labels_dir, f[:-4] + ".npy"), labels)
-            np.save(os.path.join(f0_dir, f[:-4] + ".npy"), f0)
+            # Ignores data sample sample is too long
+            if coded_sp.shape[1] < MAX_LENGTH:
 
-            worlds_made += 1
+                np.save(os.path.join(world_dir, f[:-4] + ".npy"), coded_sp)
+                np.save(os.path.join(labels_dir, f[:-4] + ".npy"), labels)
+                np.save(os.path.join(f0_dir, f[:-4] + ".npy"), f0)
+
+                worlds_made += 1
 
         if i % 10 == 0:
             print(i, " complete.")
@@ -116,12 +118,13 @@ def generate_f0_stats(filenames, data_dir):
                 labels = np.array(labels)
                 if labels[0] == e and labels[1] == s:
                     f0_file = os.path.join(f0_dir, f[:-4] + ".npy")
-                    f0 = np.load(f0_file)
-                    f0s.append(f0)
+                    if os.path.exists(f0_file):
+                        f0 = np.load(f0_file)
+                        f0s.append(f0)
 
             log_f0_mean, f0_std = get_f0_stats(f0s)
             spk_dict[s] = (log_f0_mean, f0_std)
-            # print(f"Done emotion {e}, speaker {s}.")
+            print(f"Done emotion {e}, speaker {s}.")
         emo_stats[e] = spk_dict
 
     with open('f0_dict.pkl', 'wb') as absolute_file:
@@ -147,7 +150,7 @@ def generate_f0_stats(filenames, data_dir):
             mean_list = []
             std_list = []
 
-            for s in range(0,10):
+            for s in range(NUM_SPEAKERS):
                 mean_diff = emo_stats[e2][s][0] - emo_stats[e1][s][0]
                 std_diff = emo_stats[e2][s][1] - emo_stats[e1][s][1]
                 mean_list.append(mean_diff)
@@ -174,18 +177,15 @@ def run_preprocessing(args):
 
     data_dir = args.data_dir
     audio_dir = os.path.join(data_dir, 'audio')
-    # annotations_dir = os.path.join(data_dir, 'annotations')
-    # world_dir = os.path.join(data_dir, 'world')
-    # f0_dir = os.path.join(data_dir, 'f0')
-    # labels_dir = os.path.join(data_dir, "labels")
 
     audio_filenames = [f for f in os.listdir(audio_dir) if '.wav' in f]
 
     print("----------------- Producing WORLD features data -----------------")
-    generate_world_features(audio_filenames, data_dir)
+    # generate_world_features(audio_filenames, data_dir)
 
     print("--------------- Producing relative f0 dictionaries ---------------")
     generate_f0_stats(audio_filenames, data_dir)
+
 
 if __name__ == '__main__':
 
