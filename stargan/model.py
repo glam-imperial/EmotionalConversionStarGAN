@@ -141,7 +141,7 @@ class StarGAN_emo_VC1(object):
 
             print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
 
-        self.to_device(device = 'cpu')
+        self.to_device(device='cpu')
 
     def print_network(self, model, name):
         """Print out the network information."""
@@ -411,7 +411,7 @@ class Discriminator(nn.Module):
         c1 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c1], dim=1)
         x = self.d1(x)
-        print(x.size())
+        # print(x.size())
 
         c2 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c2], dim=1)

@@ -42,7 +42,7 @@ def cal_mcep(wav, sr=SAMPLE_RATE, dim=FEATURE_DIM, fft_size=FFTSIZE):
     '''
     f0, timeaxis, sp, ap, coded_sp = world_features(wav, sr, fft_size, dim)
 
-    if audio_utils.hp.normalise_mels:
+    if audio_utils.hp.normalise:
         coded_sp = audio_utils._normalise_coded_sp(coded_sp)
         # print("Normalised")
 

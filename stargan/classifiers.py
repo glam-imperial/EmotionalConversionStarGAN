@@ -31,7 +31,7 @@ class Emotion_Classifier(nn.Module):
         self.num_outchannels = 32
         self.m_factor = 2 if bi else 1
 
-        self.device = device
+        self.device = device  # Legacy now, never actually used
 
         kernel = 7
         padding = int((kernel-1)/2)
@@ -52,16 +52,17 @@ class Emotion_Classifier(nn.Module):
         self.out = nn.Linear(64,self.num_classes)
 
     def forward(self, x_data, x_lens):
-        '''
+        """
         x is size (batch_size, 1, max_seq_length, feature_dim)
         x_lens is size (batch_size, 1), contains seq_lens
         batch is in descending seq_len order
-        '''
+        """
 
         batch_size = x_data.size(0)
         no_features = x_data.size(3)
+        curr_device = x_data.device
 
-        #Convolutional layers
+        # Convolutional layers
         # x_data = x.unsqueeze(1)
         x_data = self.maxpool1(F.relu(self.conv1(x_data)))
         x_data = self.maxpool2(F.relu(self.conv2(x_data)))
@@ -69,26 +70,25 @@ class Emotion_Classifier(nn.Module):
         x_lens = x_lens//8    # seq_len have got ~4 times shorted
         # x = (B, channels, max_l//4, n_mels//4)
 
-        #Recurrent layers
-        # print(x_data.size())
+        # Recurrent layers
         x_data = x_data.permute(0,2,1,3)
         x_data = x_data.contiguous().view(batch_size, -1, self.num_outchannels*(no_features//8))
-        #Now x = (B, max_l//8, channels*(n_mels//8))
-        # print(x_data.size())
+        # Now x = (B, max_l//8, channels*(n_mels//8))
+
 
         x_data = nn.utils.rnn.pack_padded_sequence(x_data, x_lens,
                                                    batch_first=True,
                                                    enforce_sorted=True)
-        # print(x_data.size())
+
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size).to(device=curr_device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
-        # print(h0.size())
+                         self.hidden_size).to(device=curr_device, dtype=torch.float)
+
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)
-        x_data,_ = self.lstm1(x_data, (h0,c0))
+        x_data, _ = self.lstm1(x_data, (h0, c0))
 
         x_data, x_lens = torch.nn.utils.rnn.pad_packed_sequence(x_data, batch_first=True)
 
