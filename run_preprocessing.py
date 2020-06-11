@@ -80,6 +80,13 @@ def generate_world_features(filenames, data_dir):
         wav = np.array(wav, dtype=np.float64)
         labels = np.array(labels)
 
+        coded_sp_name = os.path.join(world_dir, f[:-4] + ".npy")
+        label_name = os.path.join(labels_dir, f[:-4] + ".npy")
+        f0_name = os.path.join(f0_dir, f[:-4] + ".npy")
+        if os.path.exists(coded_sp_name) and os.path.exists(label_name) and os.path.exists(f0_name):
+            worlds_made += 1
+            continue
+
         # Ignores data sample if wrong emotion
         if labels[0] != -1:
             f0, ap, sp, coded_sp = cal_mcep(wav)
@@ -181,7 +188,7 @@ def run_preprocessing(args):
     audio_filenames = [f for f in os.listdir(audio_dir) if '.wav' in f]
 
     print("----------------- Producing WORLD features data -----------------")
-    # generate_world_features(audio_filenames, data_dir)
+    generate_world_features(audio_filenames, data_dir)
 
     print("--------------- Producing relative f0 dictionaries ---------------")
     generate_f0_stats(audio_filenames, data_dir)
