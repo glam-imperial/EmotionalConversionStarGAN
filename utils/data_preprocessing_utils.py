@@ -8,18 +8,13 @@ features, and labels for each audio clip.
 '''
 
 import torch
-import torch.nn as nn
-import torch.utils.data as data_utils
-import torch.nn.functional as F
 
-import audio_utils
+from utils import audio_utils
 
 import numpy as np
-import librosa
-import random
 import os
 from librosa.util import find_files
-from matplotlib import pyplot as plt
+
 
 def get_speaker_from_filename(filename):
     code = filename[4] + filename[-8]
@@ -30,6 +25,7 @@ def get_speaker_from_filename(filename):
     label = conversion[code]
 
     return label
+
 
 def get_emotion_from_label(category):
 
@@ -44,12 +40,14 @@ def get_emotion_from_label(category):
 
     return label
 
+
 def getOneHot(label, n_labels):
 
     onehot = np.zeros(n_labels)
     onehot[label] = 1
 
     return onehot
+
 
 def cont2list(cont, binned = False):
 
@@ -71,6 +69,7 @@ def cont2list(cont, binned = False):
     else:
         return list
 
+
 def concatenate_labels(emo, speaker, dims, dims_dis):
 
     all_labels = torch.zeros(8)
@@ -89,11 +88,12 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
 
     return all_labels
 
+
 def get_wav_and_labels(filename, data_dir):
 
     # folder = filename[:-9]
-    wav_path = data_dir + "/audio/" + filename
-    label_path = data_dir + "/Annotations/" + filename[:-9] + ".txt"
+    wav_path = os.path.join(data_dir, "audio", filename)
+    label_path = os.path.join(data_dir, "annotations", filename[:-9] + ".txt")
 
     with open(label_path, 'r') as label_file:
 
@@ -116,6 +116,7 @@ def get_wav_and_labels(filename, data_dir):
     labels = concatenate_labels(category, speaker, dimensions, dimensions_dis)
 
     return audio, labels
+
 
 def get_samples_and_labels(filename, config):
 
@@ -147,6 +148,7 @@ def get_samples_and_labels(filename, config):
 
     return audio, labels
 
+
 def get_filenames(data_dir):
 
     files = find_files(data_dir, ext = 'wav')
@@ -157,6 +159,7 @@ def get_filenames(data_dir):
         filenames.append(f)
 
     return filenames
+
 
 if __name__ == '__main__':
 

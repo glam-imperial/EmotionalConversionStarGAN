@@ -25,10 +25,10 @@ import yaml
 import argparse
 import librosa
 
-import audio_utils
-import my_dataset
-import classifiers
-from my_dataset import get_filenames
+from utils import audio_utils
+import stargan.my_dataset as my_dataset
+import stargan.classifiers as classifiers
+from stargan.my_dataset import get_filenames
 from main import make_weight_vector
 
 import torchvision
@@ -156,9 +156,9 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
     total_y_aro = torch.rand(0).to(device = device, dtype = torch.long)
     # total_y_dom = torch.rand(0).to(device = device, dtype = torch.long)
 
-    for i, (x,y) in enumerate(test_loader):
+    for i, (x, y) in enumerate(test_loader):
 
-        if(var_len_data):
+        if var_len_data:
             x_real = x[0].to(device = device).unsqueeze(1)
             x_lens = x[1].to(device = device)
         else:
@@ -169,7 +169,7 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 
         preds = model(x_real, x_lens)
 
-        if(model_type == 'dim'):
+        if model_type == 'dim':
             y_val = y[:,0].long()
             y_aro = y[:,1].long()
             y_dom = y[:,2].long()
@@ -194,7 +194,7 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 
 
 
-    if(model_type == 'dim'):
+    if model_type == 'dim':
 
         # print(actual_preds_val[0:100])
         # print(actual_preds_aro[0:100])
@@ -227,15 +227,16 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 
     return acc, f1, UAR
 
+
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Training loop for classifier only.')
     parser.add_argument("-c","--checkpoint", type=str, default = None,
-                    help="Directory of checkpoint to resume training from")
+                        help="Directory of checkpoint to resume training from")
     parser.add_argument("-n","--num_emos", type=int, default = 4,
-                    help="Number of emotions to classify")
+                        help="Number of emotions to classify")
     parser.add_argument("-e", "--evaluate", action = 'store_true',
-                    help="False = train, True = evaluate model")
+                        help="False = train, True = evaluate model")
     args = parser.parse_args()
 
     SEED = 42
@@ -276,7 +277,7 @@ if __name__=='__main__':
 
     train_loader, test_loader = my_dataset.make_variable_dataloader(train_dataset,
                                                                     test_dataset,
-                                                                    batch_size = batch_size)
+                                                                    batch_size=batch_size)
 
     # torch.Tensor([4040./549, 4040./890,
                 # 4040./996, 4040./1605]).to(device)

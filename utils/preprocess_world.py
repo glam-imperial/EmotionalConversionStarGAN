@@ -20,8 +20,8 @@ import argparse
 from datetime import datetime
 import pickle
 
-import audio_utils
-import data_preprocessing2 as pp
+from utils import audio_utils
+import utils.data_preprocessing_utils as pp
 
 FEATURE_DIM = 36
 SAMPLE_RATE = 16000

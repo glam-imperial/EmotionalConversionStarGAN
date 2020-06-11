@@ -32,16 +32,16 @@ from pyworld import decode_spectral_envelope, synthesize
 
 from matplotlib import pyplot as plt
 
-import solver
-import model
-import audio_utils
-import data_preprocessing2 as pp
-import preprocess_world
+import stargan.solver as solver
+import stargan.model as model
+from utils import audio_utils
+import utils.data_preprocessing_utils as pp
+import utils.preprocess_world as pw
 
 def _single_conversion(filename, model, one_hot_emo):
     '''
     THIS WON'T WORK RIGHT NOW, USE THE WORLD CONVERSION LOOP IN MAIN
-    
+
     Call only from __main__ section in this module. Generates sample converted
     into each emotion.
 
@@ -52,7 +52,7 @@ def _single_conversion(filename, model, one_hot_emo):
     wav, labels = pp.get_wav_and_labels(filenames[5], config['data']['dataset_dir'])
     wav = np.array(wav, dtype = np.double)
 
-    f0, ap, sp, coded_sp = preprocess_world.cal_mcep(wav)
+    f0, ap, sp, coded_sp = pw.cal_mcep(wav)
 
     coded_sp = coded_sp.T
 
@@ -228,7 +228,7 @@ if __name__=='__main__':
         wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
         wav = np.array(wav, dtype = np.float64)
         labels = np.array(labels)
-        f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
+        f0_real, ap_real, sp, coded_sp = pw.cal_mcep(wav)
         # coded_sp_temp = np.copy(coded_sp).T
         # print(coded_sp_temp.shape)
         coded_sp = coded_sp.T

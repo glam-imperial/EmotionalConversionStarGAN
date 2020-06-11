@@ -7,7 +7,6 @@ Helper functions for reading and writing wav files.
 Hyperparameters are stored in the hyperparams class
 '''
 
-from IPython.display import Audio
 from scipy.io import wavfile
 import os
 import yaml
@@ -21,14 +20,13 @@ import pyworld
 from pyworld import decode_spectral_envelope, synthesize
 
 import numpy as np
-
 import torch
-import torch.nn as nn
 
 import matplotlib.pyplot as plt
 
 # dataset_dir = "/Users/Max/MScProject/datasets/IEMOCAP"
 # dataset_dir = "/Users/Max/MScProject/test_dir"
+
 
 class hyperparams(object):
     def __init__(self):
@@ -55,11 +53,13 @@ class hyperparams(object):
         self.sp_min_norm_value = -18.50642857581744
 
         # Store dictionaries used for f0 pitch transformations
-        with open('./f0_dict.pkl', 'rb') as fp:
-            self.f0_dict = pickle.load(fp)
+        if os.path.exists('./f0_dict.pkl'):
+            with open('./f0_dict.pkl', 'rb') as fp:
+                self.f0_dict = pickle.load(fp)
 
-        with open('./f0_relative_dict.pkl', 'rb') as fp:
-            self.f0_relative_dict = pickle.load(fp)
+        if os.path.exists('./f0_relative_dict.pkl'):
+            with open('./f0_relative_dict.pkl', 'rb') as fp:
+                self.f0_relative_dict = pickle.load(fp)
 
         # for tag, val in self.f0_dict.items():
         #     print(f'Emotion {tag} stats:')
@@ -68,10 +68,12 @@ class hyperparams(object):
 
 hp = hyperparams()
 
+
 def load_wav(path):
     wav = wavfile.read(path)[1]
     wav = copy.deepcopy(wav)/32767.0
     return wav
+
 
 def save_wav(wav, path):
     # print(np.max(np.abs(wav)))
@@ -81,6 +83,7 @@ def save_wav(wav, path):
     wav *= 48000
     wav = np.clip(wav, -32767, 32767)
     wavfile.write(path, hp.sr, wav.astype(np.int16))
+
 
 def wav2spectrogram(y, sr = hp.sr):
 
@@ -96,23 +99,28 @@ def wav2spectrogram(y, sr = hp.sr):
 
     return spec_mag
 
+
 def _normalise_mel(mel):
     mel = (mel - hp.min_norm_value)/(hp.max_norm_value - hp.min_norm_value)
     return mel
 
+
 def _unnormalise_mel(mel):
     mel = (hp.max_norm_value - hp.min_norm_value) * mel + hp.min_norm_value
     return mel
+
 
 def _normalise_coded_sp(sp):
     sp = (sp - hp.sp_min_norm_value)/(hp.sp_max_norm_value - hp.sp_min_norm_value)
 
     return sp
 
+
 def _unnormalise_coded_sp(sp):
     sp = (hp.sp_max_norm_value - hp.sp_min_norm_value) * sp + hp.sp_min_norm_value
     np.clip(sp, hp.sp_min_norm_value, hp.sp_max_norm_value)
     return sp
+
 
 def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     '''
@@ -127,6 +135,7 @@ def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
 
     return mel_spec
 
+
 def spectrogram2melspectrogram(spec, n_fft = hp.n_fft, n_mels = hp.n_mels):
 
     if isinstance(spec, torch.Tensor):
@@ -135,11 +144,13 @@ def spectrogram2melspectrogram(spec, n_fft = hp.n_fft, n_mels = hp.n_mels):
     mels = librosa.filters.mel(hp.sr, n_fft, n_mels = n_mels)
     return mels.dot(spec**hp.power)
 
+
 def melspectrogram2wav(mel):
     '''
-    Needs doing: impossible?
+    Not implemented
     '''
     return 0
+
 
 def spectrogram2wav(spectrogram):
     '''
@@ -163,17 +174,21 @@ def spectrogram2wav(spectrogram):
 
     return np.real(X_t)
 
+
 def invert_spectrogram(spectrogram):
     '''
     spectrogram: [f, t]
     '''
     return librosa.istft(spectrogram, hp.hop_length, win_length=hp.win_length, window="hann")
 
+
 def amp_to_db(spec):
     return librosa.core.amplitude_to_db(spec)
 
+
 def db_to_amp(spec):
     return librosa.core.db_to_amplitude(spec)
+
 
 def plot_spec(spec, type = 'mel'):
 
@@ -191,6 +206,7 @@ def plot_spec(spec, type = 'mel'):
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
     plt.show()
+
 
 def save_spec(spec, model_name, filename, type = 'mel'):
     '''
@@ -215,6 +231,7 @@ def save_spec(spec, model_name, filename, type = 'mel'):
     np.save(path, spec)
 
     # print("Saved.")
+
 
 def save_spec_plot(spec, model_name, filename, type = 'mel'):
     '''
@@ -247,6 +264,7 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
     plt.close("all")
     # print("Saved.")
 
+
 def save_world_wav(feats, model_name, filename):
 
     # feats = [f0, sp, ap, sp_coded, labels]
@@ -263,19 +281,13 @@ def save_world_wav(feats, model_name, filename):
 
     path = os.path.join(path, filename)
 
-    # print("Made path.")
+
     feats[3] = np.ascontiguousarray(feats[3], dtype=np.float64)
-    # print("Made contiguous.")
-    # print(feats[3].shape)
-    decoded_sp = decode_spectral_envelope(feats[3], hp.sr, fft_size = hp.n_fft)
-    # print("Decoded.")
-    # f0_converted = norm.pitch_conversion(f0, speaker, target)
+    decoded_sp = decode_spectral_envelope(feats[3], hp.sr, fft_size=hp.n_fft)
     wav = synthesize(feats[0], decoded_sp, feats[1], hp.sr)
-    # Audio(wav,rate=hp.sr)
-    # librosa.display.waveplot(y=wav, sr=hp.sr)
-    # print("Sythesized wav.")
+
     save_wav(wav, path)
-    # print("Saved wav.")
+
 
 def f0_pitch_conversion(f0, source_labels, target_labels):
     '''
@@ -298,13 +310,14 @@ def f0_pitch_conversion(f0, source_labels, target_labels):
     #
     # f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
 
-    # ----- Relative transformation ----- #
+    # ----- Proposed relative transformation ----- #
     logf0 = np.ma.log(f0)
     mean = np.mean(logf0)
     var = np.var(logf0)
     f0_converted = np.exp((logf0-mean)/var * (hp.f0_relative_dict[src_emo][trg_emo][1]+var) + mean + hp.f0_relative_dict[src_emo][trg_emo][0])
 
     return f0_converted
+
 
 if __name__ == '__main__':
 
