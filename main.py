@@ -20,7 +20,6 @@ Command line arguments:
 
 import argparse
 import torch
-import torch.nn.functional as F
 import yaml
 import numpy as np
 import random
@@ -29,9 +28,10 @@ import librosa
 from librosa.util import find_files
 
 from utils import audio_utils
-import my_dataset
-from my_dataset import get_filenames
-import solver
+import stargan.my_dataset as my_dataset
+from stargan.my_dataset import get_filenames
+import stargan.solver as solver
+
 
 def make_weight_vector(filenames, data_dir):
 

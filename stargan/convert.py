@@ -32,11 +32,11 @@ from pyworld import decode_spectral_envelope, synthesize
 
 from matplotlib import pyplot as plt
 
-import solver
-import model
+import stargan.solver as solver
+import stargan.model as model
 from utils import audio_utils
-import data_preprocessing_utils as pp
-import world_utils as pw
+import utils.data_preprocessing_utils as pp
+import utils.preprocess_world as pw
 
 def _single_conversion(filename, model, one_hot_emo):
     '''

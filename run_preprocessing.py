@@ -101,7 +101,7 @@ def generate_world_features(filenames, data_dir):
 def generate_f0_stats(filenames, data_dir):
     """Generate absolute and relative f0 dictionary"""
 
-    NUM_SPEAKERS = 4
+    NUM_SPEAKERS = 10
     NUM_EMOTIONS = 4
     f0_dir = os.path.join(data_dir, 'f0')
 

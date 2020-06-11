@@ -13,8 +13,8 @@ import yaml
 import numpy as np
 
 from utils import audio_utils
-import data_preprocessing_utils as pp
-import world_utils as pw
+import utils.data_preprocessing_utils as pp
+import utils.preprocess_world as pw
 
 import torch
 import librosa

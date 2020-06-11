@@ -7,9 +7,7 @@ The custom dataset and collate function described in the report.
 '''
 
 import torch
-import torch.nn as nn
 import torch.utils.data as data_utils
-import torch.nn.functional as F
 
 from utils import audio_utils
 

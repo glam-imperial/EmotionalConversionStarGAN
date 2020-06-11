@@ -21,10 +21,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils import audio_utils
-import model
-import my_dataset
-from logger import Logger
-from sample_set import Sample_Set
+import stargan.model as model
+from stargan.logger import Logger
+from stargan.sample_set import Sample_Set
 
 import sklearn
 from sklearn.metrics import f1_score
@@ -173,6 +172,7 @@ class Solver(object):
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
             ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
+            ce_loss_fn = nn.CrossEntropyLoss()
 
             if self.config['loss']['train_classifier']:
                 print('Training Classifiers...')
@@ -207,7 +207,7 @@ class Solver(object):
                     #;;; DO FOR MULTILABEL
                     c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
 
-                    c_speaker_real_loss.backward()
+                    c_dimension_real_loss.backward()
                     self.model.speaker_cls_optimizer.step()
             else:
                 print('No classifier training this run.')

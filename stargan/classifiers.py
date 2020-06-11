@@ -13,7 +13,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from average_weighted_attention import Average_Weighted_Attention
+from stargan.average_weighted_attention import Average_Weighted_Attention
+
 
 class Emotion_Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, num_classes, bi = False,
@@ -102,12 +103,13 @@ class Emotion_Classifier(nn.Module):
 
         return x_data
 
+
 class Dimension_Classifier(nn.Module):
-    '''
+    """
     Model for multi-task classification of valence and arousal.
     Uses three conv2d->maxpooling layers, into two separate sequential modelling
     networks for prediction of valence and arousal.
-    '''
+    """
     def __init__(self, input_size, hidden_size, num_layers, bi = False, device = 'cuda'):
         '''
         NOTE: input size must be directly divisible by 4
@@ -181,6 +183,7 @@ class Dimension_Classifier(nn.Module):
 
         return x_val, x_aro#, x_dom
 
+
 class Single_Dimension_Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, bi = False, device = 'cuda'):
         super(Single_Dimension_Classifier, self).__init__()
@@ -224,5 +227,6 @@ class Single_Dimension_Classifier(nn.Module):
 
         return x_data
 
+
 if __name__ == '__main__':
-    print(36//8)
+    pass
