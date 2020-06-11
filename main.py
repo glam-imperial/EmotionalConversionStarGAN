@@ -61,20 +61,20 @@ if __name__ == '__main__':
 
     # ADD ALL CONFIG ARGS
     parser = argparse.ArgumentParser(description='StarGAN-emo-VC main method')
-    parser.add_argument("-n", "--name", type = str, default = None,
-                    help="Model name for training.")
-    parser.add_argument("-c","--checkpoint", type=str, default = None,
-                    help="Directory of checkpoint to resume training from")
-    parser.add_argument("--load_emo", type=str, default = None,
-                    help="Directory of pretrained emotional classifier checkpoint to use if desired.")
-    parser.add_argument("-e", "--evaluate", action = 'store_true',
-                    help="False = train, True = evaluate model")
-    parser.add_argument("-a", "--alter", action = 'store_true')
+    parser.add_argument("-n", "--name", type = str, default=None,
+                        help="Model name for training.")
+    parser.add_argument("-c","--checkpoint", type=str, default=None,
+                        help="Directory of checkpoint to resume training from")
+    parser.add_argument("--load_emo", type=str, default=None,
+                        help="Directory of pretrained emotional classifier checkpoint to use if desired.")
+    parser.add_argument("-e", "--evaluate", action='store_true',
+                        help="False = train, True = evaluate model")
+    parser.add_argument("-a", "--alter", action='store_true')
 
     args = parser.parse_args()
     config = yaml.load(open('./config.yaml', 'r'))
 
-    if args.name != None:
+    if args.name is not None:
         config['model']['name'] = args.name
         print(config['model']['name'])
 
@@ -85,7 +85,6 @@ if __name__ == '__main__':
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
-
 
     # Use GPU
     USE_GPU = True
@@ -116,7 +115,6 @@ if __name__ == '__main__':
 
     # MAKE TRAIN + TEST SPLIT
     files = get_filenames(data_dir)
-
 
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     num_emos = config['model']['num_classes']

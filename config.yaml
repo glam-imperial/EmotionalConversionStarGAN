@@ -51,10 +51,10 @@ logs:
 
 data:
 
-    dataset_dir: "../data"
-    sample_set_dir: '../data/samples/originals'
+    dataset_dir: "./processed_data"
+    sample_set_dir: './processed_data/samples/originals'
     train_test_split: 0.9
-    normalise_mels: True
+    normalise: True
     type: 'world'
 
 verbose: False

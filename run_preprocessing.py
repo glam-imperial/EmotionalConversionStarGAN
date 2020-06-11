@@ -191,7 +191,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Main preprocessing pipeline')
     parser.add_argument("--iemocap_dir", type=str, help="Directory of IEMOCAP dataset")
-    parser.add_argument("--data_dir", type=str, default='../data',
+    parser.add_argument("--data_dir", type=str, default='./processed_data',
                         help="Directory to copy audio and annotation files to.")
 
     args = parser.parse_args()

@@ -45,7 +45,7 @@ class hyperparams(object):
         self.config = yaml.load(open('./config.yaml', 'r'))
         self.sample_set_dir = self.config['logs']['sample_dir']
 
-        self.normalise_mels = self.config['data']['normalise_mels']
+        self.normalise = self.config['data']['normalise']
         self.max_norm_value = 3226.99139880277
         self.min_norm_value = 3.8234146815389095e-10
 
@@ -130,7 +130,7 @@ def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels = n_mels,
         n_fft = hp.n_fft, hop_length = hp.hop_length)
     # mel_spec = librosa.core.amplitude_to_db(y)
-    if hp.normalise_mels:
+    if hp.normalise:
         mel_spec = _normalise_mel(mel_spec)
 
     return mel_spec
@@ -197,7 +197,7 @@ def plot_spec(spec, type = 'mel'):
     if isinstance(spec, torch.Tensor):
         spec = spec.cpu().numpy()
 
-    if hp.normalise_mels:
+    if hp.normalise:
         spec = _unnormalise_mel(spec)
 
     librosa.display.specshow(librosa.power_to_db(spec), y_axis=type, sr=hp.sr,
@@ -218,7 +218,7 @@ def save_spec(spec, model_name, filename, type = 'mel'):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.cpu().numpy()
-    if hp.normalise_mels:
+    if hp.normalise:
         spec = _unnormalise_mel(spec)
 
     path = os.path.join(hp.sample_set_dir, model_name)
@@ -243,7 +243,7 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.cpu().numpy()
-    if hp.normalise_mels:
+    if hp.normalise:
         spec = _unnormalise_mel(spec)
 
     librosa.display.specshow(librosa.power_to_db(spec), y_axis=type, sr=hp.sr,
@@ -271,7 +271,7 @@ def save_world_wav(feats, model_name, filename):
 
     if isinstance(feats[3], torch.Tensor):
         feats[3] = feats[3].cpu().numpy()
-    if hp.normalise_mels:
+    if hp.normalise:
         feats[3] = _unnormalise_coded_sp(feats[3])
 
     path = os.path.join(hp.sample_set_dir, model_name)
@@ -384,7 +384,7 @@ if __name__ == '__main__':
     print("Max = ", np.max(librosa.power_to_db(spec)))
     print("Min = ", np.min(librosa.power_to_db(spec)))
 
-    # if hp.normalise_mels:
+    # if hp.normalise:
     #     spec = _unnormalise_mel(spec)
 
     ax4 = fig.add_subplot(4, 2, 4, sharey=ax1)
@@ -402,7 +402,7 @@ if __name__ == '__main__':
     print("Max = ", np.max(librosa.power_to_db(spec)))
     print("Min = ", np.min(librosa.power_to_db(spec)))
 
-    # if hp.normalise_mels:
+    # if hp.normalise:
     #     spec = _unnormalise_mel(spec)
 
     ax4 = fig.add_subplot(4, 2, 5, sharey=ax1)
@@ -420,7 +420,7 @@ if __name__ == '__main__':
     print("Max = ", np.max(librosa.power_to_db(spec)))
     print("Min = ", np.min(librosa.power_to_db(spec)))
 
-    # if hp.normalise_mels:
+    # if hp.normalise:
     #     spec = _unnormalise_mel(spec)
 
     ax4 = fig.add_subplot(4, 2, 6, sharey=ax1)
