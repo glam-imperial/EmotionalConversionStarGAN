@@ -1,11 +1,11 @@
-'''
+"""
 data_preprocessing2.py
 
 Author - Max Elliott
 
 Functions for pre-processing the IEMOCAP dataset. Can make mel-specs, WORLD
 features, and labels for each audio clip.
-'''
+"""
 
 import torch
 
@@ -19,8 +19,7 @@ from librosa.util import find_files
 def get_speaker_from_filename(filename):
     code = filename[4] + filename[-8]
 
-    conversion = {'1F':0, '1M':1, '2F':2, '2M':3, '3F':4, '3M':5, '4F':6, '4M':7,
-                    '5F': 8, '5M':9}
+    conversion = {'1F': 0, '1M': 1, '2F': 2, '2M': 3, '3F': 4, '3M': 5, '4F': 6, '4M': 7, '5F': 8, '5M': 9}
 
     label = conversion[code]
 
@@ -29,12 +28,12 @@ def get_speaker_from_filename(filename):
 
 def get_emotion_from_label(category):
 
-    if category == 'xxx' or category =='dis' or category =='fea' or category == 'oth':
+    if category == 'xxx' or category == 'dis' or category == 'fea' or category == 'oth':
         return -1
     if category == 'exc' or category == 'fru' or category == 'sur':
         return -1
 
-    conversion = {'ang':0, 'sad':1, 'hap':2, 'neu':3}
+    conversion = {'ang': 0, 'sad': 1, 'hap': 2, 'neu': 3}
 
     label = conversion[category]
 
@@ -49,7 +48,7 @@ def getOneHot(label, n_labels):
     return onehot
 
 
-def cont2list(cont, binned = False):
+def cont2list(cont, binned=False):
 
     list = [0,0,0]
     list[0] = float(cont[1:6])
@@ -73,7 +72,6 @@ def cont2list(cont, binned = False):
 def concatenate_labels(emo, speaker, dims, dims_dis):
 
     all_labels = torch.zeros(8)
-    # print(all_labels)
 
     # for i, row in enumerate(all_labels):
     all_labels[0] = emo
@@ -85,13 +83,11 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
     all_labels[6] = dims_dis[1]
     all_labels[7] = dims_dis[2]
 
-
     return all_labels
 
 
 def get_wav_and_labels(filename, data_dir):
 
-    # folder = filename[:-9]
     wav_path = os.path.join(data_dir, "audio", filename)
     label_path = os.path.join(data_dir, "annotations", filename[:-9] + ".txt")
 
@@ -110,7 +106,6 @@ def get_wav_and_labels(filename, data_dir):
                     dimensions_dis = cont2list(split[3], binned = True)
                     speaker = get_speaker_from_filename(filename)
 
-
     audio = audio_utils.load_wav(wav_path)
     audio = np.array(audio, dtype = np.float32)
     labels = concatenate_labels(category, speaker, dimensions, dimensions_dis)
@@ -119,8 +114,6 @@ def get_wav_and_labels(filename, data_dir):
 
 
 def get_samples_and_labels(filename, config):
-
-    # config = yaml.load(open('./config.yaml', 'r'))
 
     wav_path = config['data']['sample_set_dir'] + "/" + filename
     folder = filename[:-9]
@@ -140,7 +133,6 @@ def get_samples_and_labels(filename, config):
                     dimensions = cont2list(split[3])
                     dimensions_dis = cont2list(split[3], binned = True)
                     speaker = get_speaker_from_filename(filename)
-
 
     audio = audio_utils.load_wav(wav_path)
     audio = np.array(audio, dtype = np.float32)
@@ -183,10 +175,10 @@ if __name__ == '__main__':
     i = 0
     found = 0
     lengths = []
-    longest_length = 0
+    longest_lensgth = 0
     longest_name = ""
     for f in filenames:
-        if i >10000:
+        if i > 10000:
             print(f)
         wav, labels = get_wav_and_labels(f, data_dir)
         # mel = audio_utils.wav2melspectrogram(wav)

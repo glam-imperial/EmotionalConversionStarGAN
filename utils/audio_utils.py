@@ -16,7 +16,6 @@ import pickle
 import librosa
 import librosa.display
 
-import pyworld
 from pyworld import decode_spectral_envelope, synthesize
 
 import numpy as np
@@ -30,16 +29,16 @@ import matplotlib.pyplot as plt
 
 class hyperparams(object):
     def __init__(self):
-        self.sr = 16000 # Sampling rate. Paper => 24000
-        self.n_fft = 1024 # fft points (samples)
-        self.frame_shift = 0.0125 # seconds
-        self.frame_length = 0.05 # seconds
-        self.hop_length = int(self.sr*self.frame_shift) # samples  This is dependent on the frame_shift.
-        self.win_length = int(self.sr*self.frame_length) # samples This is dependent on the frame_length.
-        self.n_mels = 80 # Number of Mel banks to generate
+        self.sr = 16000  # Sampling rate. Paper => 24000
+        self.n_fft = 1024  # fft points (samples)
+        self.frame_shift = 0.0125  # seconds
+        self.frame_length = 0.05   # seconds
+        self.hop_length = int(self.sr*self.frame_shift)  # samples  This is dependent on the frame_shift.
+        self.win_length = int(self.sr*self.frame_length)  # samples This is dependent on the frame_length.
+        self.n_mels = 80  # Number of Mel banks to generate
         self.power = 1.2 # Exponent for amplifying the predicted magnitude
-        self.n_iter = 100 # Number of inversion iterations
-        self.use_log_magnitude = True # if False, use magnitude
+        self.n_iter = 100  # Number of inversion iterations
+        self.use_log_magnitude = True  # if False, use magnitude
         self.preemph = 0.97
 
         self.config = yaml.load(open('./config.yaml', 'r'))
@@ -61,11 +60,6 @@ class hyperparams(object):
             with open('./f0_relative_dict.pkl', 'rb') as fp:
                 self.f0_relative_dict = pickle.load(fp)
 
-        # for tag, val in self.f0_dict.items():
-        #     print(f'Emotion {tag} stats:')
-        #     for tag2, val2 in val.items():
-        #         print(f'{tag2} = {val2[0]}, {val2[1]}')
-
 hp = hyperparams()
 
 
@@ -76,8 +70,6 @@ def load_wav(path):
 
 
 def save_wav(wav, path):
-    # print(np.max(np.abs(wav)))
-    # print(np.mean(np.abs(wav)))
     # wav *= 32767 / max(0.01, np.max(np.abs(wav)))
 
     wav *= 48000
@@ -85,17 +77,15 @@ def save_wav(wav, path):
     wavfile.write(path, hp.sr, wav.astype(np.int16))
 
 
-def wav2spectrogram(y, sr = hp.sr):
+def wav2spectrogram(y, sr=hp.sr):
 
     '''
     Produces log-magnitude spectrogram of audio data y
     '''
 
-    spec = librosa.core.stft(y, n_fft = hp.n_fft, hop_length = hp.hop_length,
-                                                win_length = hp.win_length)
+    spec = librosa.core.stft(y, n_fft=hp.n_fft, hop_length=hp.hop_length,
+                                                win_length=hp.win_length)
     spec_mag = amp_to_db(np.abs(spec))
-    # spec_angle = np.angle(spec)
-    # spec_mag = lowpass(spec_mag, 400)
 
     return spec_mag
 
@@ -127,8 +117,8 @@ def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     y = input wav file
     '''
 
-    mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels = n_mels,
-        n_fft = hp.n_fft, hop_length = hp.hop_length)
+    mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=n_mels,
+        n_fft=hp.n_fft, hop_length=hp.hop_length)
     # mel_spec = librosa.core.amplitude_to_db(y)
     if hp.normalise:
         mel_spec = _normalise_mel(mel_spec)
@@ -136,12 +126,12 @@ def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     return mel_spec
 
 
-def spectrogram2melspectrogram(spec, n_fft = hp.n_fft, n_mels = hp.n_mels):
+def spectrogram2melspectrogram(spec, n_fft=hp.n_fft, n_mels=hp.n_mels):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.numpy()
 
-    mels = librosa.filters.mel(hp.sr, n_fft, n_mels = n_mels)
+    mels = librosa.filters.mel(hp.sr, n_fft, n_mels=n_mels)
     return mels.dot(spec**hp.power)
 
 
@@ -339,7 +329,7 @@ if __name__ == '__main__':
 
     plt.subplot(4, 2, 1)
     librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
-                            hop_length=hp.hop_length, vmax = -8.47987, vmin= -100.0)
+                            hop_length=hp.hop_length, vmax=-8.47987, vmin=-100.0)
                                                     # fmin=None, fmax=4000)
     # plt.colorbar(format='%+2.0f dB')
     plt.title('1) Original (sad)')

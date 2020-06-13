@@ -1,4 +1,4 @@
-'''
+"""
 sample_set.py
 
 Author - Max Elliott
@@ -6,7 +6,7 @@ Author - Max Elliott
 Class to hold sample files when generating test samples during training.
 Actually wasn't that useful in the end, just did conversion with each checkpoint
 after training was complete.
-'''
+"""
 
 import os
 import yaml
@@ -52,14 +52,13 @@ class Sample_Set():
                 coded_sp = torch.Tensor(coded_sp.T)
                 self.set[filename] = [f0, ap, sp, coded_sp, labels]
 
-
-
     def get_set(self):
-        '''
+        """
         Return dict of all samples
         Each value in dict is (mel, labels, spec) = ((len,n_mels),(8),(len2, n_ffts/2+1))
-        '''
+        """
         return self.set
+
 
 if __name__ == '__main__':
 

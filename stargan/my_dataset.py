@@ -1,26 +1,23 @@
-'''
+"""
 my_dataset.py
 
 Author - Max Elliott
 
 The custom dataset and collate function described in the report.
-'''
+"""
 
 import torch
 import torch.utils.data as data_utils
 
-from utils import audio_utils
-
 import numpy as np
-import librosa
 from librosa.util import find_files
 import random
 import os
-import yaml
+
 
 def get_filenames(dir):
 
-    files = find_files(dir, ext = 'npy')
+    files = find_files(dir, ext='npy')
     filenames = []
 
     for f in files:
@@ -29,10 +26,12 @@ def get_filenames(dir):
 
     return filenames
 
+
 def shuffle(in_list):
-    '''
+    """
     in_list: list to be shuffled
-    '''
+    """
+
     indices = list(range(len(in_list)))
     random.shuffle(indices)
 
@@ -43,7 +42,8 @@ def shuffle(in_list):
 
     return shuffled_list
 
-def _pad_sequence(seq, length, pad_value = 0):
+
+def _pad_sequence(seq, length, pad_value=0):
     new_seq = torch.zeros((length,seq.size(1)))
     if seq.size(0) <= length:
         new_seq[:seq.size(0), :] = seq
@@ -51,28 +51,28 @@ def _pad_sequence(seq, length, pad_value = 0):
         new_seq[:seq.size(0), :] = seq[:length, :]
     return new_seq
 
+
 def crop_sequences(seq_list, labels, segment_len):
-    '''
+    """
     seq_list = ([(seq_len, n_feats)])
     labels = ([label])
-    '''
+    """
     new_seqs = []
     new_labels = []
 
     for i, seq in enumerate(seq_list):
 
-
         while seq.size(0) >= segment_len:
 
-            new_seq = seq[0:segment_len,:]
+            new_seq = seq[0:segment_len, :]
             new_seqs.append(new_seq)
             new_labels.append(labels[i])
 
-            seq = torch.Tensor(seq[segment_len:,:])
+            seq = torch.Tensor(seq[segment_len:, :])
             if new_seq.size(0) != segment_len:
                 print(i, new_seq.size(0))
 
-        if seq.size(0) > segment_len//2:
+        if seq.size(0) > segment_len // 2:
 
             new_seq = _pad_sequence(seq, segment_len)
             new_seqs.append(new_seq)
@@ -80,12 +80,13 @@ def crop_sequences(seq_list, labels, segment_len):
 
     return new_seqs, new_labels
 
+
 class MyDataset(data_utils.Dataset):
 
     def __init__(self, config, filenames):
         super(MyDataset, self).__init__()
 
-        self.config  = config
+        self.config = config
         self.dataset_dir = config['data']['dataset_dir']
 
         if config['data']['type'] == 'mel':
@@ -111,8 +112,9 @@ class MyDataset(data_utils.Dataset):
     def __len__(self):
         return len(self.filenames)
 
+
 def collate_length_order(batch):
-    '''
+    """
     batch: Batch elements are tuples ((Tensor)sequence, target)
 
     Sorts batch by sequence length
@@ -121,7 +123,7 @@ def collate_length_order(batch):
         (FloatTensor) sequence_padded: seqs in length order, padded to max_len
         (LongTensor) lengths: lengths of seqs in sequence_padded
         (LongTensor) labels: corresponding targets, in correct order
-    '''
+    """
     # assume that each element in "batch" is a tuple (data, label).
     # Sort the batch in the descending order
     sorted_batch = sorted(batch, key=lambda x: x[0].size(0), reverse=True)
@@ -135,13 +137,10 @@ def collate_length_order(batch):
     for i,seq in enumerate(sequences):
         if seq.size(0) > 512:
             start_index = random.randint(0, seq.size(0)-512)
-            # print(start_index)
-            sequences[i] = seq[start_index:start_index+512,:]
-        # (seq[i] = seq[:512,:]) if seq.size(0) > 512 else seq[i] = seq
+            sequences[i] = seq[start_index:start_index+512, :]
 
     sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
     current_len = sequences_padded.size(1)
-    # print(f"Current length: {current_len}")
     if current_len < 512:
         pad_len = 512 - current_len
         new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
@@ -187,7 +186,7 @@ def collate_length_order(batch):
     # Also need to store the length of each sequence
     # This is later needed in order to unpad the sequences
     lengths = [len(x) for x in sequences]
-    for i,l in enumerate(lengths):
+    for i, l in enumerate(lengths):
         if l > 512:
             lengths[i] = 512
     lengths = torch.LongTensor([len(x) for x in sequences])
@@ -197,29 +196,19 @@ def collate_length_order(batch):
 
     return [sequences_padded, lengths], targets
 
-def make_variable_dataloader(train_set, test_set, batch_size = 64):
 
-    train_loader = data_utils.DataLoader(train_set, batch_size = batch_size,
-                                         collate_fn = collate_length_order,
-                                         num_workers = 0, shuffle = True)
+def make_variable_dataloader(train_set, test_set, batch_size=64):
 
-    test_loader = data_utils.DataLoader(test_set, batch_size = batch_size,
-                                         collate_fn = collate_length_order,
-                                         num_workers = 0, shuffle = True)
+    train_loader = data_utils.DataLoader(train_set, batch_size=batch_size,
+                                         collate_fn=collate_length_order,
+                                         num_workers=0, shuffle=True)
+
+    test_loader = data_utils.DataLoader(test_set, batch_size=batch_size,
+                                        collate_fn=collate_length_order,
+                                        num_workers=0, shuffle=True)
 
     return train_loader, test_loader
 
-if __name__ == '__main__':
 
-    max_len = 608
-    print("Original size = ", max_len)
-    div8 = max_len%2==0
-    div5 = max_len%5==0
-    div9 = max_len%3==0
-    if not (div8 and div5 and div9):
-        pad_len = max_len + 1
-        print("Current pad:", (pad_len%3 !=0 or pad_len%5!=0 or pad_len%9!=0))
-        while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%9!=0):
-            pad_len += 1
-            print("Current pad:", (pad_len%8 !=0 or pad_len%5!=0 or pad_len%9!=0))
-        pad_len = pad_len - max_len
+if __name__ == '__main__':
+    pass
