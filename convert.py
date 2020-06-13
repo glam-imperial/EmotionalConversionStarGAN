@@ -34,9 +34,12 @@ from matplotlib import pyplot as plt
 
 import stargan.solver as solver
 import stargan.model as model
+import stargan.my_dataset as my_dataset
+from stargan.my_dataset import get_filenames
 from utils import audio_utils
 import utils.data_preprocessing_utils as pp
 import utils.preprocess_world as pw
+
 
 def _single_conversion(filename, model, one_hot_emo):
     '''
@@ -81,7 +84,7 @@ def _single_conversion(filename, model, one_hot_emo):
     out_name = filename[:-4] + str(labels[1]) + "to" + target + ".wav"
 
 
-    audio_utils.save_world_wav([f0,ap,sp,converted_sp], model.name + '_converted', out_name)
+    audio_utils.save_world_wav([f0,ap,sp,converted_sp], out_name)
 
     # print(converted_sp[0, :])
     # converted_sp[0:3, :] = converted_sp[0:3, :]/1.15
@@ -115,11 +118,12 @@ if __name__=='__main__':
     #   directory of wav files to be converted
     #   save directory
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', '--model', type = str,
-                        help = "Model to use for conversion.")
-    parser.add_argument('-in', '--in_dir', type = str)
-    parser.add_argument('-out', '--out_dir', type = str)
-    parser.add_argument('-i', '--iteration', type = str)
+    # parser.add_argument('-m', '--model', type = str,
+    #                     help = "Model to use for conversion.")
+    parser.add_argument('-in', '--in_dir', type=str, default=None)
+    parser.add_argument('-out', '--out_dir', type=str)
+    # parser.add_argument('-i', '--iteration', type = str)
+    parser.add_argument('-c', '--checkpoint', type=str, help='Checkpoint file of model')
     # parser.add_argument('-n', '--num_emotions', type = int, default = None)
     # parser.add_argument('-f', '--features'), type = str,
                         # help = "mel or world features.")
@@ -127,8 +131,8 @@ if __name__=='__main__':
     args = parser.parse_args()
     config = yaml.load(open('./config.yaml', 'r'))
 
-    checkpoint_dir = '../checkpoints/' + args.model + '/' + args.iteration + '.ckpt'
-    # checkpoint_dir = '../downloaded/checkpoints/world2_full_2/160000.ckpt'
+    # checkpoint_dir = '../checkpoints/' + args.model + '/' + args.iteration + '.ckpt'
+    checkpoint_dir = args.checkpoint
 
     print("Loading model at ", checkpoint_dir)
 
@@ -153,7 +157,6 @@ if __name__=='__main__':
 
     # Load model
     model = model.StarGAN_emo_VC1(config, config['model']['name'])
-    # model.load(args.checkpoint)
     model.load(checkpoint_dir, map_location= map_location)
     config = model.config
     model.to_device(device = device)
@@ -163,13 +166,12 @@ if __name__=='__main__':
     # s = solver.Solver(None, None, config, load_dir = None)
     # targets =
     num_emos = config['model']['num_classes']
-    emo_labels = torch.Tensor(range(0,num_emos)).long()
+    emo_labels = torch.Tensor(range(0, num_emos)).long()
     emo_targets = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = device)
     print(f"Number of emotions = {num_emos}")
 
-    if args.in_dir == 'sample':
-        in_dir = '../data/samples/originals'
-        files = find_files(in_dir, ext = 'wav')
+    if args.in_dir is not None:
+        files = find_files(args.in_dir, ext='wav')
 
         filenames = []
         for f in files:
@@ -177,33 +179,33 @@ if __name__=='__main__':
             filenames.append(f)
 
         print("Converting sample set.")
-    elif args.in_dir == 'neutral':
-        in_dir = '../data/audio'
-        files = find_files(in_dir, ext = 'wav')
-        filenames = [os.path.basename(f)[:-4] + ".wav" for f in files]
-
-        filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]==3]
-        random.shuffle(filenames)
-        filenames = filenames[0:30]
-
-        print(len(filenames))
-
     else:
-        if num_emos == 2:
-            with open('./2_emotions_testset.pkl', 'rb') as fp:
-                filenames = pickle.load(fp)
-        elif num_emos == 3:
-            with open('./3_emotions_testset.pkl', 'rb') as fp:
-                filenames = pickle.load(fp)
-        filenames = [f+".wav" for f in filenames]
-        filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]<num_emos]
-        filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]==2]
+
+        data_dir = os.path.join(config['data']['dataset_dir'], "audio")
+
+        print("Data directory = ", data_dir)
+        files = find_files(data_dir, ext='.wav')
+
+        label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
+        num_emos = config['model']['num_classes']
+
+        # filenames = [f + ".wav" for f in files]
+        filenames = [f for f in files if
+                     -1 < pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0] < num_emos]
+        filenames = [os.path.join(config['data']['dataset_dir'], f) for f in filenames][:10]
+
+        files = my_dataset.shuffle(files)
+
+        train_test_split = config['data']['train_test_split']
+        split_index = int(len(files) * train_test_split)
+        filenames = files[split_index:]
+
+        print("Converting 10 random test set samples.")
         print(filenames)
-        print("Converting test set.")
     # for one_hot in emo_targets:
     #     _single_conversion(filenames[0], model, one_hot)
 
-    filenames = ["Ses01F_impro02_F014.wav"]
+    # filenames = ["Ses01F_impro02_F014.wav"]
 
     # filenames = ["../data/mii.wav"]
     # labels = [1,0,0,0,0,0,0,0]
@@ -237,7 +239,7 @@ if __name__=='__main__':
         with torch.no_grad():
             # print(emo_targets)
             for i in range (0, emo_targets.size(0)):
-                print("Doing one.")
+                # print("Doing one.")
 
 
                 f0 = np.copy(f0_real)
@@ -249,9 +251,11 @@ if __name__=='__main__':
 
                 fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
-                print(f"Converting {f[0:-4]}.")
-                filename_wav =  f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                print(f"Converting {f[0:-4]} to {i}.")
+                model_iteration_string = model.config['model']['name'] + '_' + os.path.basename(args.checkpoint).replace('.ckpt', '')
+                filename_wav = model_iteration_string + '_' + f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
                             str(i) + ".wav"
+                filename_wav = os.path.join(args.out_dir, filename_wav)
 
                 fake = fake.squeeze()
                 # print("Sampled size = ",fake.size())
@@ -273,8 +277,7 @@ if __name__=='__main__':
                 # print("ap shape = ", ap.shape)
                 # print("f0 shape = ", f0.shape)
                 # print(converted_sp.shape)
-                it = str(args.iteration)[0:3]
-                audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it, filename_wav)
+                audio_utils.save_world_wav([f0,ap,sp,converted_sp], filename_wav)
         # print(f, " converted.")
         if (file_num+1) % 20 == 0:
             print(file_num+1, " done.")

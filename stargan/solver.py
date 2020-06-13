@@ -526,7 +526,7 @@ class Solver(object):
                                 str(self.current_iter) + ".wav"
 
                     fake = fake.squeeze()
-                    print("Sampled size = ",fake.size())
+                    # print("Sampled size = ",fake.size())
                     # f = fake.data()
                     converted_sp = fake.cpu().numpy()
                     converted_sp = np.array(converted_sp, dtype = np.float64)

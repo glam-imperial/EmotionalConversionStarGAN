@@ -45,17 +45,17 @@ logs:
     model_save_dir: './checkpoints'
 
     log_every: 1
-    sample_every: 1000
+    sample_every: 10000
     test_every: 1000
-    model_save_every: 1000
+    model_save_every: 10000
 
 data:
 
-    dataset_dir: "../data"
-    sample_set_dir: '../data/samples/originals'
+    dataset_dir: "./processed_data"
+    sample_set_dir: './processed_data/samples/'
     train_test_split: 0.9
-    normalise_mels: True
+    normalise: True
     type: 'world'
 
 verbose: False
-device: torch.device('cuda')
+device: torch.device('cpu')
