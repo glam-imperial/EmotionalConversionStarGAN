@@ -29,7 +29,7 @@ from utils import audio_utils
 import stargan.my_dataset as my_dataset
 import stargan.classifiers as classifiers
 from stargan.my_dataset import get_filenames
-from main import make_weight_vector
+from train_main import make_weight_vector
 
 import torchvision
 import sklearn
@@ -45,13 +45,16 @@ else:
     device = torch.device('cpu')
 print("Device used: ", device)
 
-def save_checkpoint(state, filename='./checkpoint.ckpt'):
+def save_checkpoint(state, filename='.checkpoints/cls_checkpoint.ckpt'):
 
     print("Saving a new best model")
+    if not os.path.exists(os.path.dirname(filename)):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+
     torch.save(state, filename)  # save checkpoint
 
 
-def load_checkpoint(model, optimiser, filename = './checkpoint.pth'):
+def load_checkpoint(model, optimiser, filename='.checkpoints/cls_checkpoint.ckpt'):
 
     checkpoint = torch.load(filename)
 
@@ -62,7 +65,7 @@ def load_checkpoint(model, optimiser, filename = './checkpoint.pth'):
     return epoch
 
 def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
-                model_type = 'cls', epochs=1, print_every = 1, var_len_data = False, start_epoch = 1):
+                model_type='cls', epochs=1, print_every=1, var_len_data = False, start_epoch = 1):
 
     model = model.to(device=device) # move the model parameters to CPU/GPU
 
@@ -231,9 +234,9 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Training loop for classifier only.')
-    parser.add_argument("-c","--checkpoint", type=str, default = None,
+    parser.add_argument("-c","--checkpoint", type=str, default=None,
                         help="Directory of checkpoint to resume training from")
-    parser.add_argument("-n","--num_emos", type=int, default = 4,
+    parser.add_argument("-n","--num_emos", type=int, default=3,
                         help="Number of emotions to classify")
     parser.add_argument("-e", "--evaluate", action = 'store_true',
                         help="False = train, True = evaluate model")

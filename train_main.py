@@ -132,7 +132,6 @@ if __name__ == '__main__':
     split_index = int(len(files)*train_test_split)
     train_files = files[:split_index]
     test_files = files[split_index:]
-    # test_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(6,8)]
 
     # print(test_files)
 

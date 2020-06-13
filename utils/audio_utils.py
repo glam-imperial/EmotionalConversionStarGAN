@@ -265,7 +265,7 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
     # print("Saved.")
 
 
-def save_world_wav(feats, model_name, filename):
+def save_world_wav(feats, filename):
 
     # feats = [f0, sp, ap, sp_coded, labels]
 
@@ -274,19 +274,18 @@ def save_world_wav(feats, model_name, filename):
     if hp.normalise:
         feats[3] = _unnormalise_coded_sp(feats[3])
 
-    path = os.path.join(hp.sample_set_dir, model_name)
+    # path = os.path.join(hp.sample_set_dir, model_name)
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if not os.path.exists(os.path.dirname(filename)):
+        os.makedirs(os.path.dirname(filename))
 
-    path = os.path.join(path, filename)
-
+    # path = os.path.join(path, filename)
 
     feats[3] = np.ascontiguousarray(feats[3], dtype=np.float64)
     decoded_sp = decode_spectral_envelope(feats[3], hp.sr, fft_size=hp.n_fft)
     wav = synthesize(feats[0], decoded_sp, feats[1], hp.sr)
 
-    save_wav(wav, path)
+    save_wav(wav, filename)
 
 
 def f0_pitch_conversion(f0, source_labels, target_labels):
