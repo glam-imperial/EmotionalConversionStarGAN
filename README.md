@@ -18,30 +18,20 @@ cd EmotionalConversionStarGAN
 - Download IEMOCAP dataset from https://sail.usc.edu/iemocap/
 # IEMOCAP Preprocessing
 Running the script **run_preprocessing.py** will prepare the IEMOCAP as needed for training the model. It assumes that IEMOCAP is already downloaded and is stored in directory <DIR> (you're choosing) with this file structure
+```
 <DIR>
-  
-  |- Session1
-  
-  |     |- Annotations
-  
-  |     |- Ses01F_impro01
-  
-  |     |- Ses01F_impro02
-  
-  |     |- ...
-  
+  |- Session1  
+  |     |- Annotations  
+  |     |- Ses01F_impro01  
+  |     |- Ses01F_impro02  
+  |     |- ...  
   |- ...
-  
   |- Session5
-  
         |- Annotations
-        
         |- Ses05F_impro01
-        
         |- Ses05F_impro02
-        
         |- ...
-        
+```
 where Annotations is a directory holding the label .txt files for all Session<x> (Ses01F_impro01.txt etc.), and each other directory (Ses01F_impro01, Ses01F_impro02 etc.) holds the .wav files for each scene in the session.
   
  To preprocess run
