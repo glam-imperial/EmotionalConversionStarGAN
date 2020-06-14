@@ -10,12 +10,24 @@ This repository contains code to replicate results from the ICASSP 2020 paper "S
 The IEMOCAP database requires the signing of an EULA; please communicate with the handlers: https://sail.usc.edu/iemocap/
 
 # Preparing
-- Clone repository:
+**- Requirements:**
+python>3.7.0
+pytorch
+numpy
+argparse
+librosa
+scikit-learn
+tensorflow < 2.0
+pyworld
+matplotlib
+yaml
+**- Clone repository:**
 ```
 git clone https://github.com/glam-imperial/EmotionalConversionStarGAN.git
 cd EmotionalConversionStarGAN
 ```
-- Download IEMOCAP dataset from https://sail.usc.edu/iemocap/
+**- Download IEMOCAP dataset from https://sail.usc.edu/iemocap/**
+
 # IEMOCAP Preprocessing
 Running the script **run_preprocessing.py** will prepare the IEMOCAP as needed for training the model. It assumes that IEMOCAP is already downloaded and is stored in an arbitrary directory <DIR> with this file structure
 ```
