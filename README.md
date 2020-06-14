@@ -17,7 +17,7 @@ cd EmotionalConversionStarGAN
 ```
 - Download IEMOCAP dataset from https://sail.usc.edu/iemocap/
 # IEMOCAP Preprocessing
-Running the script **run_preprocessing.py** will prepare the IEMOCAP as needed for training the model. It assumes that IEMOCAP is already downloaded and is stored in directory <DIR> (you're choosing) with this file structure
+Running the script **run_preprocessing.py** will prepare the IEMOCAP as needed for training the model. It assumes that IEMOCAP is already downloaded and is stored in an arbitrary directory <DIR> with this file structure
 ```
 <DIR>
   |- Session1  
@@ -60,7 +60,7 @@ After running you should have a file structure:
  ```
  python convert.py --checkpoint <path/to/model_checkpoint.ckpt> -o ./processed_data/converted
  ```
- will load a model checkpoint and convert 10 random samples from the test set into each emotion and save the converted samples in /processed_data/converted.
+ will load a model checkpoint and convert 10 random samples from the test set into each emotion and save the converted samples in /processed_data/converted (currently bugged: run conversion as stated below).
  Specifying an input directory will convert all the audio files in that directory:
  ```
  python convert.py --checkpoint <path/to/model_checkpoint.ckpt> -i <path/to/wavs> -o ./processed_data/converted
