@@ -85,7 +85,7 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             else:
                 x_real = x.to(device=device, dtype=torch.float)
 
-            y = y[:,0].to(device=device, dtype=torch.float)
+            y = y[:, 0].to(device=device, dtype=torch.float)
 
             optimiser.zero_grad()
             # print(x_real.size())
@@ -119,8 +119,8 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             print(f'| Epoch: {e:02} | Train Loss: {total_loss:.3f}')
 
             acc, f1, UAR = test_model(model, val_data_loader,
-                                 var_len_data = var_len_data,
-                                 model_type = model_type)
+                                 var_len_data=var_len_data,
+                                 model_type=model_type)
 
 #             log_writer.add_scalar('f1', f1)
 #             log_writer.add_scalar('lr', optimiser.state_dict()['param_groups'][0]['lr'])
@@ -144,7 +144,8 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
                             'loss_fn': loss_fn}
                     save_checkpoint(state)
 
-def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
+
+def test_model(model, test_loader, var_len_data=False, model_type='cls'):
 
     model = model.to(device=device)
     model.eval()
@@ -240,6 +241,7 @@ if __name__=='__main__':
                         help="Number of emotions to classify")
     parser.add_argument("-e", "--evaluate", action='store_true',
                         help="False = train, True = evaluate model")
+    parser.add_argument("--epochs", type=int, help='Number epochs of training.', default=50)
     args = parser.parse_args()
 
     SEED = 42
@@ -248,7 +250,7 @@ if __name__=='__main__':
     random.seed(SEED)
 
     # num_classes = 2
-    n_epochs = 100
+    n_epochs = args.epochs
     hidden_size = 128
     input_size = 36
     num_layers = 2
