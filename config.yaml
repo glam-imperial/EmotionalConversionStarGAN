@@ -1,6 +1,6 @@
 model:
 
-      name: "test111"
+      name: "model1"
       num_feats: 36
       batch_size: 4
       use_speaker: False
@@ -47,7 +47,7 @@ logs:
     log_every: 1
     sample_every: 10000
     test_every: 1000
-    model_save_every: 10000
+    model_save_every: 2
 
 data:
 

@@ -27,7 +27,7 @@ from sklearn.metrics import accuracy_score
 
 class Solver(object):
 
-    def __init__(self, train_loader, test_loader, config, load_dir=None):
+    def __init__(self, train_loader, test_loader, config, load_dir=None, recon_only=False):
 
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -38,6 +38,8 @@ class Solver(object):
         self.model = model.StarGAN_emo_VC1(self.config, self.model_name)
         self.set_configuration()
         self.model = self.model
+
+        self.recon_only = recon_only
 
         if load_dir is not None:
             self.load_checkpoint(load_dir)
@@ -153,7 +155,7 @@ class Solver(object):
             # Generate target domain labels randomly.
             num_emos = self.config['model']['num_classes']
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
-            emo_targets = emo_targets.to(device = self.device)
+            emo_targets = emo_targets.to(device=self.device)
 
             # one-hot versions of labels
             emo_labels_ones = F.one_hot(emo_labels, num_classes=num_emos).float().to(device=self.device)
@@ -165,7 +167,7 @@ class Solver(object):
             ce_weighted_loss_fn = nn.CrossEntropyLoss(weight=self.emo_loss_weights)
             ce_loss_fn = nn.CrossEntropyLoss()
 
-            if self.config['loss']['train_classifier']:
+            if self.config['loss']['train_classifier'] and not self.recon_only:
                 print('Training Classifiers...')
 
                 self.model.reset_grad()
@@ -246,7 +248,6 @@ class Solver(object):
                 x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
 
                 # x_cycle = self.make_equal_length(x_cycle, x_real)
                 x_id = self.make_equal_length(x_id, x_real)
@@ -256,11 +257,13 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
-                g_loss = loss_g_fake + self.lambda_id * loss_id + \
-                                       self.lambda_cycle * loss_cycle + \
-                                       self.lambda_g_emo_cls * loss_g_emo_cls
+                g_loss = loss_g_fake + self.lambda_id * loss_id + self.lambda_cycle * loss_cycle
+
+                if not self.recon_only:
+                    preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
+                    loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
+                    g_loss += self.lambda_g_emo_cls * loss_g_emo_cls
 
                 if self.use_speaker:
 
@@ -284,8 +287,6 @@ class Solver(object):
             #############################################################
             if i % self.log_every == 0:
                 loss = {}
-                if self.config['loss']['train_classifier']:
-                    loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
                 loss['D/gradient_penalty'] = grad_penalty.item()
@@ -293,8 +294,10 @@ class Solver(object):
                 loss['G/loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
+                if not self.recon_only:
+                    loss['G/loss_g_emo_cls'] = loss_g_emo_cls.mean().item()
 
-                if self.config['loss']['train_classifier']:
+                if self.config['loss']['train_classifier'] and not self.recon_only:
                     loss['C/emo_real_loss'] = c_emo_real_loss.item()
                     if self.use_speaker:
                         loss['C/spk_real_loss'] = c_speaker_real_loss.item()
@@ -315,7 +318,7 @@ class Solver(object):
 
             # save checkpoint
             if i % self.model_save_every == 0:
-                self.model.save(save_dir=self.model_save_dir, iter=self.current_iter)
+                self.model.save(save_dir=self.model_save_dir, it=self.current_iter)
             else:
                 print("No model saved this iteration.")
 
@@ -334,7 +337,7 @@ class Solver(object):
             elapsed = datetime.now() - start_time
             print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
 
-        self.model.save(save_dir=self.model_save_dir, iter=self.current_iter)
+        self.model.save(save_dir=self.model_save_dir, it=self.current_iter)
 
     def test(self):
 

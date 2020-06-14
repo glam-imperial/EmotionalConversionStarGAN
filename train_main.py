@@ -1,4 +1,4 @@
-'''
+"""
 main.py
 
 Author - Max Elliott
@@ -16,7 +16,7 @@ Command line arguments:
                       ./config.yaml (this is useful if models are trained in
                       stages as propsed in the project report)
 
-'''
+"""
 
 import argparse
 import torch
@@ -24,10 +24,7 @@ import yaml
 import numpy as np
 import random
 import os
-import librosa
-from librosa.util import find_files
 
-from utils import audio_utils
 import stargan.my_dataset as my_dataset
 from stargan.my_dataset import get_filenames
 import stargan.solver as solver
@@ -61,24 +58,26 @@ if __name__ == '__main__':
 
     # ADD ALL CONFIG ARGS
     parser = argparse.ArgumentParser(description='StarGAN-emo-VC main method')
-    parser.add_argument("-n", "--name", type = str, default=None,
+    parser.add_argument("-n", "--name", type=str, default=None,
                         help="Model name for training.")
-    parser.add_argument("-c","--checkpoint", type=str, default=None,
+    parser.add_argument("-c", "--checkpoint", type=str, default=None,
                         help="Directory of checkpoint to resume training from")
     parser.add_argument("--load_emo", type=str, default=None,
                         help="Directory of pretrained emotional classifier checkpoint to use if desired.")
-    parser.add_argument("-e", "--evaluate", action='store_true',
-                        help="False = train, True = evaluate model")
+    parser.add_argument("--recon_only", help='Train a model without auxiliary classifier: learn to reconstruct input.',
+                        action='store_true')
+    parser.add_argument("--config", help='path of config file for training. Defaults = ./config.yaml',
+                        default='./config.yaml')
     parser.add_argument("-a", "--alter", action='store_true')
 
     args = parser.parse_args()
-    config = yaml.load(open('./config.yaml', 'r'))
+    config = yaml.load(open(args.config, 'r'))
 
     if args.name is not None:
         config['model']['name'] = args.name
         print(config['model']['name'])
 
-    #fix seeds to get consistent results
+    # fix seeds to get consistent results
     SEED = 42
     # torch.backend.cudnn.deterministic = True
     # torch.backend.cudnn.benchmark = False
@@ -120,11 +119,9 @@ if __name__ == '__main__':
     num_emos = config['model']['num_classes']
 
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
-    # train_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(0,6)]
 
     print(len(files), " files used.")
     weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
-    # print(weight_vector)
 
     files = my_dataset.shuffle(files)
 
@@ -149,27 +146,24 @@ if __name__ == '__main__':
 
     train_loader, test_loader = my_dataset.make_variable_dataloader(train_dataset,
                                                                     test_dataset,
-                                                                    batch_size = batch_size)
+                                                                    batch_size=batch_size)
 
     print("Performing whole network training.")
-    s = solver.Solver(train_loader, test_loader, config, load_dir = args.checkpoint)
+    s = solver.Solver(train_loader, test_loader, config, load_dir=args.checkpoint, recon_only=args.recon_only)
 
     if args.load_emo is not None:
-        s.model.load_pretrained_classifier(args.load_emo, map_location = 'cpu')
+        s.model.load_pretrained_classifier(args.load_emo, map_location='cpu')
         print("Loaded pre-trained emotional classifier.")
 
     if args.alter:
-        print("Changing loaded config to new config.")
+        print(f"Changing loaded config to new config {args.config}.")
         s.config = config
         s.set_configuration()
 
     s.set_classification_weights(weight_vector)
 
-    if not args.evaluate:
-        print("Training model.")
-        s.train()
-    else:
-        print("No training. Model loaded in evaluation mode.")
+    print("Training model.")
+    s.train()
 
     # for i, (x,y) in train_loader:
     #

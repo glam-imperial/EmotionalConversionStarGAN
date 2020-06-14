@@ -45,7 +45,7 @@ else:
     device = torch.device('cpu')
 print("Device used: ", device)
 
-def save_checkpoint(state, filename='.checkpoints/cls_checkpoint.ckpt'):
+def save_checkpoint(state, filename='./checkpoints/cls_checkpoint.ckpt'):
 
     print("Saving a new best model")
     if not os.path.exists(os.path.dirname(filename)):
@@ -54,7 +54,7 @@ def save_checkpoint(state, filename='.checkpoints/cls_checkpoint.ckpt'):
     torch.save(state, filename)  # save checkpoint
 
 
-def load_checkpoint(model, optimiser, filename='.checkpoints/cls_checkpoint.ckpt'):
+def load_checkpoint(model, optimiser, filename='./checkpoints/cls_checkpoint.ckpt'):
 
     checkpoint = torch.load(filename)
 
@@ -234,11 +234,11 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Training loop for classifier only.')
-    parser.add_argument("-c","--checkpoint", type=str, default=None,
+    parser.add_argument("-c", "--checkpoint", type=str, default=None,
                         help="Directory of checkpoint to resume training from")
-    parser.add_argument("-n","--num_emos", type=int, default=3,
+    parser.add_argument("-n", "--num_emos", type=int, default=3,
                         help="Number of emotions to classify")
-    parser.add_argument("-e", "--evaluate", action = 'store_true',
+    parser.add_argument("-e", "--evaluate", action='store_true',
                         help="False = train, True = evaluate model")
     args = parser.parse_args()
 
@@ -262,7 +262,7 @@ if __name__=='__main__':
     num_emos = args.num_emos
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
-    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in [9,8,7,6]]
+    # files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in [9, 8, 7, 6]]
     files = my_dataset.shuffle(files)
 
     train_test_split = config['data']['train_test_split']
