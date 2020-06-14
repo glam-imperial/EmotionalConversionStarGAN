@@ -54,8 +54,8 @@ After running you should have a file structure:
  ./full_training_script.sh
  ```
  This script runs three steps:
- 1. Runs classifier_train.py - Pretrains an auxiliary emotional classifier. Saves best checkpoint to ./checkpoints/cls_checkpoint.ckpt.
- 2.Runs main training for 200k iterations in --recon_only mode, meaning model learns to simply reconstruct the input audio.
+ 1. Runs classifier_train.py - Pretrains an auxiliary emotional classifier. Saves best checkpoint to ./checkpoints/cls_checkpoint.ckpt
+ 2. Runs main training for 200k iterations in --recon_only mode, meaning model learns to simply reconstruct the input audio.
  3. Trains model for a further 100k steps, introducing the pre-trained classifier.
  
  A full training run will take ~24 hours on a decent GPU. The auxiliary emotional classifier can also be trained independently using **classifier_train.py**.
