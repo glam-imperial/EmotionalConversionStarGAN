@@ -11,16 +11,16 @@ The IEMOCAP database requires the signing of an EULA; please communicate with th
 
 # Preparing
 **- Requirements:**
-python>3.7.0
-pytorch
-numpy
-argparse
-librosa
-scikit-learn
-tensorflow < 2.0
-pyworld
-matplotlib
-yaml
+* python>3.7.0
+* pytorch
+* numpy
+* argparse
+* librosa
+* scikit-learn
+* tensorflow < 2.0
+* pyworld
+* matplotlib
+* yaml
 **- Clone repository:**
 ```
 git clone https://github.com/glam-imperial/EmotionalConversionStarGAN.git
