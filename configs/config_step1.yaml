@@ -1,0 +1,61 @@
+model:
+
+      name: "model_step1"
+      num_feats: 36
+      batch_size: 4
+      use_speaker: False
+      use_dimension: False
+      num_classes: 3
+
+loss:
+
+    lambda_gp: 5
+    lambda_g_emo_cls: 1
+    lambda_g_spk_cls: 1
+    lambda_g_dim_cls: 1
+    lambda_cycle: 3
+    lambda_id: 2
+
+    num_iters: 200000
+    num_iters_decay: 100000
+    resume_iters: 0
+
+    train_classifier: False
+    c_to_g_ratio: 5
+    c_to_d_ratio: 1
+
+optimizer:
+
+    beta1: 0.5
+    beta2: 0.999
+
+    g_lr: 0.0001
+    d_lr: 0.0001
+    emo_cls_lr: 0.0001
+    speaker_cls_lr: 0.0001
+    dim_cls_lr: 0.0001
+
+
+logs:
+
+    use_tensorboard: True
+
+    log_dir: './logs'
+    sample_dir: './samples'
+    model_save_dir: './checkpoints'
+
+    log_every: 5
+    sample_every: 10000
+    test_every: 1000
+    model_save_every: 10000
+
+data:
+
+    dataset_dir: "./processed_data"
+    sample_set_dir: './processed_data/samples/'
+    train_test_split: 0.9
+    normalise: True
+    type: 'world'
+
+verbose: False
+device: torch.device('cuda')
