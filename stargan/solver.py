@@ -1,4 +1,4 @@
-'''
+"""
 solver.py
 
 Author: Max Elliott
@@ -8,13 +8,10 @@ checkpoint. Has capabilities for running extra auxiliary classifiers for tasks
 that were never implemented (namely speaker classifiers and dimension classifiers).
 Its generally safe to ignore anything in a "if self.use_speaker:"
 or "if self.use_dimension:" block and these should be set to False by config.yaml.
-'''
-import os
+"""
 import random
 import numpy as np
-import copy
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import torch
 import torch.nn as nn
@@ -25,15 +22,12 @@ import stargan.model as model
 from stargan.logger import Logger
 from stargan.sample_set import Sample_Set
 
-import sklearn
-from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import recall_score
 
 
 class Solver(object):
 
-    def __init__(self, train_loader, test_loader, config, load_dir = None):
+    def __init__(self, train_loader, test_loader, config, load_dir=None, recon_only=False):
 
         self.train_loader = train_loader
         self.test_loader = test_loader
@@ -45,12 +39,13 @@ class Solver(object):
         self.set_configuration()
         self.model = self.model
 
-        if not load_dir == None:
+        self.recon_only = recon_only
+
+        if load_dir is not None:
             self.load_checkpoint(load_dir)
 
     def load_checkpoint(self, load_dir):
 
-        # path = os.path.join(self.model_save_dir, self.model_name)
         self.model.load(load_dir)
         self.config = self.model.config
         self.set_configuration()
@@ -74,8 +69,7 @@ class Solver(object):
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        self.emo_loss_weights = torch.Tensor([4040./549, 4040./890,
-                                             4040./996, 4040./1605]).to(self.device)
+        self.emo_loss_weights = torch.Tensor([4040./549, 4040./890, 4040./996, 4040./1605]).to(self.device)
 
         self.use_speaker = self.config['model']['use_speaker']
         self.use_dimension = self.config['model']['use_dimension']
@@ -114,9 +108,9 @@ class Solver(object):
         print("Set classification weights.")
 
     def train(self):
-        '''
+        """
         Main training loop
-        '''
+        """
         print('################ BEGIN TRAINING LOOP ################')
 
         start_iter = self.resume_iters + 1 # == 1 if new model
@@ -134,7 +128,7 @@ class Solver(object):
 
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Iteration {:02}/{:02} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".format(i,self.num_iters))
             print("Iteration {:02} lr = {:.6f}".format(i, self.model.d_optimizer.param_groups[0]['lr']))
-            self.model.to_device(device = self.device)
+            self.model.to_device(device=self.device)
             print("Device is ", self.device)
             print("Classifier device is ", self.model.emo_cls.device)
             self.model.set_train_mode()
@@ -150,31 +144,30 @@ class Solver(object):
                 data_iter = iter(self.train_loader)
                 x, labels = next(data_iter)
 
-
             x_real = x[0].to(device = self.device).unsqueeze(1)
             x_lens = x[1].to(device = self.device)
             print(f"solver.train: x_real size = {x_real.size()}")
 
-            emo_labels = labels[:,0].to(device = self.device)
-            spk_labels = labels[:,1].to(device = self.device)
+            emo_labels = labels[:, 0].to(device=self.device)
+            spk_labels = labels[:, 1].to(device=self.device)
             # ;;;;;;; GET DIM LABELS
 
             # Generate target domain labels randomly.
             num_emos = self.config['model']['num_classes']
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
-            emo_targets = emo_targets.to(device = self.device)
+            emo_targets = emo_targets.to(device=self.device)
 
             # one-hot versions of labels
-            emo_labels_ones = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
-            emo_targets_ones = F.one_hot(emo_targets, num_classes = num_emos).float().to(device = self.device)
+            emo_labels_ones = F.one_hot(emo_labels, num_classes=num_emos).float().to(device=self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes=num_emos).float().to(device=self.device)
 
             #############################################################
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
-            ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
+            ce_weighted_loss_fn = nn.CrossEntropyLoss(weight=self.emo_loss_weights)
             ce_loss_fn = nn.CrossEntropyLoss()
 
-            if self.config['loss']['train_classifier']:
+            if self.config['loss']['train_classifier'] and not self.recon_only:
                 print('Training Classifiers...')
 
                 self.model.reset_grad()
@@ -204,7 +197,7 @@ class Solver(object):
                     # Train with x_real
                     preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
 
-                    #;;; DO FOR MULTILABEL
+                    # ;;; DO FOR MULTILABEL
                     c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
 
                     c_dimension_real_loss.backward()
@@ -229,8 +222,8 @@ class Solver(object):
                 # print(x_real.size())
                 # print(x_fake.size())
 
-                #Calculate loss
-                grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
+                #C alculate loss
+                grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones)  # detach(), one hots?
 
                 d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
                          self.lambda_gp * grad_penalty
@@ -255,8 +248,6 @@ class Solver(object):
                 x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
-
 
                 # x_cycle = self.make_equal_length(x_cycle, x_real)
                 x_id = self.make_equal_length(x_id, x_real)
@@ -266,11 +257,13 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
-                g_loss = loss_g_fake + self.lambda_id * loss_id + \
-                                       self.lambda_cycle * loss_cycle# + \
-                                       # self.lambda_g_emo_cls * loss_g_emo_cls
+                g_loss = loss_g_fake + self.lambda_id * loss_id + self.lambda_cycle * loss_cycle
+
+                if not self.recon_only:
+                    preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
+                    loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
+                    g_loss += self.lambda_g_emo_cls * loss_g_emo_cls
 
                 if self.use_speaker:
 
@@ -294,18 +287,17 @@ class Solver(object):
             #############################################################
             if i % self.log_every == 0:
                 loss = {}
-                if self.config['loss']['train_classifier']:
-                    loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
-                # loss['G/emo_loss'] = loss_g_emo_cls.item()
                 loss['D/gradient_penalty'] = grad_penalty.item()
                 loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
+                if not self.recon_only:
+                    loss['G/loss_g_emo_cls'] = loss_g_emo_cls.mean().item()
 
-                if self.config['loss']['train_classifier']:
+                if self.config['loss']['train_classifier'] and not self.recon_only:
                     loss['C/emo_real_loss'] = c_emo_real_loss.item()
                     if self.use_speaker:
                         loss['C/spk_real_loss'] = c_speaker_real_loss.item()
@@ -326,7 +318,7 @@ class Solver(object):
 
             # save checkpoint
             if i % self.model_save_every == 0:
-                self.model.save(save_dir = self.model_save_dir, iter = self.current_iter)
+                self.model.save(save_dir=self.model_save_dir, it=self.current_iter)
             else:
                 print("No model saved this iteration.")
 
@@ -345,8 +337,7 @@ class Solver(object):
             elapsed = datetime.now() - start_time
             print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
 
-        self.model.save(save_dir = self.model_save_dir, iter = self.current_iter)
-
+        self.model.save(save_dir=self.model_save_dir, it=self.current_iter)
 
     def test(self):
 
@@ -354,37 +345,37 @@ class Solver(object):
         print("Testing generator accuracy ...")
         self.model.set_eval_mode()
 
-        real_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
-        fake_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
-        id_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
-        cycle_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
+        real_preds = torch.rand(0).to(device=self.device, dtype=torch.long)
+        fake_preds = torch.rand(0).to(device=self.device, dtype=torch.long)
+        id_preds = torch.rand(0).to(device=self.device, dtype=torch.long)
+        cycle_preds = torch.rand(0).to(device=self.device, dtype=torch.long)
 
-        total_labels = torch.rand(0).to(device = self.device, dtype = torch.long)
-        total_targets = torch.rand(0).to(device = self.device, dtype = torch.long)
+        total_labels = torch.rand(0).to(device=self.device, dtype=torch.long)
+        total_targets = torch.rand(0).to(device=self.device, dtype=torch.long)
 
-        total_real = torch.rand(0).to(device = self.device, dtype = torch.float)
-        total_id = torch.rand(0).to(device = self.device, dtype = torch.float)
-        total_cycle = torch.rand(0).to(device = self.device, dtype = torch.float)
+        total_real = torch.rand(0).to(device=self.device, dtype=torch.float)
+        total_id = torch.rand(0).to(device=self.device, dtype=torch.float)
+        total_cycle = torch.rand(0).to(device=self.device, dtype=torch.float)
         l1_loss_fn = nn.L1Loss()
 
         for i, (x, labels) in enumerate(self.test_loader):
 
-            x_real = x[0].to(device = self.device)
-            x_lens = x[1].to(device = self.device)
+            x_real = x[0].to(device=self.device)
+            x_lens = x[1].to(device=self.device)
 
             x_real = x_real.unsqueeze(1)
 
-            emo_labels = labels[:,0].to(device = self.device)
-            spk_labels = labels[:,1].to(device = self.device)
+            emo_labels = labels[:, 0].to(device=self.device)
+            spk_labels = labels[:, 1].to(device=self.device)
 
             # Generate target domain labels randomly.
             num_emos = self.config['model']['num_classes']
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
-            emo_targets = emo_targets.to(device = self.device)
+            emo_targets = emo_targets.to(device=self.device)
 
             # one-hot versions of labels
-            emo_labels_ones = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
-            emo_targets_ones = F.one_hot(emo_targets, num_classes = num_emos).float().to(device = self.device)
+            emo_labels_ones = F.one_hot(emo_labels, num_classes=num_emos).float().to(device=self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes=num_emos).float().to(device=self.device)
 
             with torch.no_grad():
 
@@ -427,8 +418,7 @@ class Solver(object):
         # print(L1_loss_id)
         # print(L1_loss_cycle)
 
-        l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle",
-            "L1_id", "L1_cycle"]
+        l = ["Accuracy_real", "Accuracy_fake", "Accuracy_id", "Accuracy_cycle", "L1_id", "L1_cycle"]
 
         print('{:20} = {:.3f}'.format(l[0], accuracy_real))
         print('{:20} = {:.3f}'.format(l[1], accuracy_fake))
@@ -446,10 +436,10 @@ class Solver(object):
             self.logger.scalar_summary("Val/test_L1_cycle", L1_loss_cycle, self.current_iter)
 
     def sample_mel(self):
-        '''
+        """
         Passes each performance sample through G for every target emotion. They
         are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
-        '''
+        """
 
         print("Saving mel samples...")
 
@@ -473,23 +463,23 @@ class Solver(object):
 
                     fake = self.model.G(mel, emo_targets[i].unsqueeze(0))
 
-                    filename_png =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-                                str(emo_labels[i].item()) + '_i=' +\
-                                str(self.current_iter) + ".png"
+                    filename_png = tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                   str(emo_labels[i].item()) + '_i=' +\
+                                   str(self.current_iter) + ".png"
 
-                    filename_npy =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-                                str(emo_labels[i].item()) + '_i=' +\
-                                str(self.current_iter) + ".npy"
+                    filename_npy = tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                   str(emo_labels[i].item()) + '_i=' +\
+                                   str(self.current_iter) + ".npy"
 
                     fake = fake.squeeze()
                     audio_utils.save_spec_plot(fake.t(), self.model_name, filename_png)
                     audio_utils.save_spec(fake.t(), self.model_name, filename_npy)
 
     def sample_world(self):
-        '''
+        """
         Passes each performance sample through G for every target emotion. They
         are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
-        '''
+        """
 
         print("Saving world samples...")
 
@@ -513,17 +503,17 @@ class Solver(object):
             coded_sp = val[3].unsqueeze(0).unsqueeze(0).to(device = self.device)
 
             with torch.no_grad():
-                # print(emo_targets)
-                for i in range (0, emo_targets.size(0)):
+
+                for i in range(0, emo_targets.size(0)):
 
                     f0 = np.copy(f0_real)
                     ap = np.copy(ap_real)
 
                     fake = self.model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
-                    filename_wav =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-                                str(emo_labels[i].item()) + '_i=' +\
-                                str(self.current_iter) + ".wav"
+                    filename_wav = tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                   str(emo_labels[i].item()) + '_i=' +\
+                                   str(self.current_iter) + ".wav"
 
                     fake = fake.squeeze()
                     # print("Sampled size = ",fake.size())
@@ -543,7 +533,7 @@ class Solver(object):
                     # print("ap shape = ", val[1].shape)
                     # print("f0 shape = ", val[0].shape)
 
-                    audio_utils.save_world_wav([f0,ap,sp,converted_sp], self.model_name, filename_wav)
+                    audio_utils.save_world_wav([f0, ap, sp, converted_sp], self.model_name, filename_wav)
 
     def update_lr(self, i):
         """Decay learning rates of the generator and discriminator and classifier."""
@@ -575,11 +565,11 @@ class Solver(object):
                     param_group['lr'] = emo_lr
 
     def make_random_labels(self, num_domains, num_labels):
-        '''
+        """
         Creates random labels for generator.
         num_domains: number of unique labels
         num_labels: total number of labels to generate
-        '''
+        """
         domain_list = np.arange(0, num_domains)
         # print(domain_list)
         labels = torch.zeros((num_labels))
@@ -594,7 +584,6 @@ class Solver(object):
         # Compute loss for gradient penalty.
         alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
         x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
-        # print("x_hat size: ", x_hat.size())
         out_src = self.model.D(x_hat, targets)
 
         weight = torch.ones(out_src.size()).to(self.device)
@@ -615,7 +604,5 @@ class Solver(object):
         return x_out
 
 
-
-
 if __name__ == '__main__':
-    print("Is main.")
+    pass

@@ -1,23 +1,16 @@
-'''
+"""
 preprocess_world.py
 
 Author - Max Elliott
 
 Functions for extracting WORLD features form wav files. ALso for initial
 pre-processing of data.
-'''
+"""
 
-import librosa
 from librosa.util import find_files
 import numpy as np
 import os
 import pyworld
-# import pyworld as pw
-from pyworld import decode_spectral_envelope, synthesize
-import glob
-# from utility import *
-import argparse
-from datetime import datetime
 import pickle
 
 from utils import audio_utils
@@ -28,6 +21,7 @@ SAMPLE_RATE = 16000
 FRAMES = 512
 FFTSIZE = 1024
 
+
 def world_features(wav, sr, fft_size, dim):
     f0, timeaxis = pyworld.harvest(wav, sr)
     sp = pyworld.cheaptrick(wav, f0, timeaxis, sr,fft_size=fft_size)
@@ -36,19 +30,21 @@ def world_features(wav, sr, fft_size, dim):
 
     return f0, timeaxis, sp, ap, coded_sp
 
+
 def cal_mcep(wav, sr=SAMPLE_RATE, dim=FEATURE_DIM, fft_size=FFTSIZE):
-    '''cal mcep given wav singnal
-        the frame_period used only for pad_wav_to_get_fixed_frames
-    '''
+    """
+    cal mcep given wav singnal
+    the frame_period used only for pad_wav_to_get_fixed_frames
+    """
     f0, timeaxis, sp, ap, coded_sp = world_features(wav, sr, fft_size, dim)
 
     if audio_utils.hp.normalise:
         coded_sp = audio_utils._normalise_coded_sp(coded_sp)
-        # print("Normalised")
 
-    coded_sp = coded_sp.T # dim x n
+    coded_sp = coded_sp.T  # dim x n
 
     return f0, ap, sp, coded_sp
+
 
 def get_f0_stats(f0s):
     log_f0s_concatenated = np.ma.log(np.concatenate(f0s))
@@ -59,11 +55,10 @@ def get_f0_stats(f0s):
     log_f0s_mean = log_f0s_concatenated.mean()
     log_f0s_std = np.var(log_f0s_concatenated)
 
-
     return log_f0s_mean, log_f0s_std
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
 
     ###########################################
     #       WORLD features testing code       #

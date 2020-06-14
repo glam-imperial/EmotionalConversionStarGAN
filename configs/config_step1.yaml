@@ -1,6 +1,6 @@
 model:
 
-      name: "model1"
+      name: "model_step1"
       num_feats: 36
       batch_size: 4
       use_speaker: False
@@ -16,12 +16,12 @@ loss:
     lambda_cycle: 3
     lambda_id: 2
 
-    num_iters: 20
-    num_iters_decay: 10
+    num_iters: 200000
+    num_iters_decay: 100000
     resume_iters: 0
 
-    train_classifier: True
-    c_to_g_ratio: 1
+    train_classifier: False
+    c_to_g_ratio: 5
     c_to_d_ratio: 1
 
 optimizer:
@@ -44,10 +44,10 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 1
+    log_every: 5
     sample_every: 10000
     test_every: 1000
-    model_save_every: 2
+    model_save_every: 10000
 
 data:
 
@@ -58,4 +58,4 @@ data:
     type: 'world'
 
 verbose: False
-device: torch.device('cpu')
+device: torch.device('cuda')

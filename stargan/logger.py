@@ -1,11 +1,10 @@
-'''
+"""
 logger.py
 
 Altered version of Logger.py by hujinsen. Original source can be found at:
     https://github.com/hujinsen/pytorch-StarGAN-VC
-'''
+"""
 import tensorflow as tf
-
 import os
 
 
@@ -26,4 +25,3 @@ class Logger(object):
         """Add scalar summary."""
         summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
         self.writer.add_summary(summary, step)
-        # print("scalar_summary called.")
