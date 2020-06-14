@@ -21,6 +21,7 @@ The IEMOCAP database requires the signing of an EULA; please communicate with th
 * pyworld
 * matplotlib
 * yaml
+
 **- Clone repository:**
 ```
 git clone https://github.com/glam-imperial/EmotionalConversionStarGAN.git
