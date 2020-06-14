@@ -40,13 +40,14 @@ where Annotations is a directory holding the label .txt files for all Session<x>
  ```
  which will move all audio files to ./procesed_data/audio as well as extract all WORLD features and labels needed for training. It will only extract these for samples of the correct emotions (angry, sad, happy) and under the certain hardocded length threshold (to speed up training time). it will also create dictionaries for F0 statistics which are used to alter the F0 of a sample when converting.
 After running you should have a file structure:
+```
 ./processed_data
  |- annotations
  |- audio
  |- f0
  |- labels
  |- world
- 
+ ```
  # Training EmotionStarGAN
  Main training script is **train_main.py**. However to automatically train as it was trained for "StarGAN for Emotional Speech Conversion: Validated by Data Augmentation of End-to-End Emotion Recognition", simply call:
  ```
