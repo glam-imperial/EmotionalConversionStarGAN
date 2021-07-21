@@ -30,28 +30,36 @@ def copy_files(iemocap_dir, output_dir):
     if not os.path.exists(annotations_output_dir):
         os.mkdir(annotations_output_dir)
 
-    filenames = []
-    specs = []
-    mels = []
-    labels = []
-    conts = []
-    conts_dis = []
-    speakers = []
     for session in os.listdir(iemocap_dir):
+        if not session.startswith("Session"):
+            continue
 
-        if not session == ".DS_Store":
-            session_dir = os.path.join(iemocap_dir, session)
-            for foldername in os.listdir(session_dir):
+        session_dir = os.path.join(iemocap_dir, session)
 
-                subsession_dir = os.path.join(session_dir, foldername)
-                if not foldername == ".DS_Store":
-                    for filename in os.listdir(subsession_dir):
+        annotations_dir = os.path.join(session_dir, "dialog", "EmoEvaluation")
+        for filename in os.listdir(annotations_dir):
+            if not filename.endswith(".txt"):
+                continue
 
-                        if not filename == ".DS_Store":
-                            src_file = os.path.join(subsession_dir, filename)
-                            dest_file = os.path.join(annotations_output_dir, filename) if foldername == "Annotations" else os.path.join(audio_output_dir, filename)
-                            if not os.path.exists(dest_file):
-                                copyfile(src_file, dest_file)
+            src_file = os.path.join(annotations_dir, filename)
+            dest_file = os.path.join(annotations_output_dir, filename)
+            if not os.path.exists(dest_file):
+                copyfile(src_file, dest_file)
+
+        wav_dir = os.path.join(session_dir, "sentences", "wav")
+        for foldername in os.listdir(wav_dir):
+            if not foldername.startswith("Ses"):
+                continue
+
+            subsession_dir = os.path.join(wav_dir, foldername)
+            for filename in os.listdir(subsession_dir):
+                if not filename.endswith(".wav"):
+                    continue
+
+                src_file = os.path.join(subsession_dir, filename)
+                dest_file = os.path.join(audio_output_dir, filename)
+                if not os.path.exists(dest_file):
+                    copyfile(src_file, dest_file)
 
         print(session + " completed.")
 
